@@ -44,3 +44,15 @@
 - Commit: 15fb166b82033f7d4db15c02afd22ac97d16330f
 - Status: Complete
 - Next: Part 4 — Scoring, Decision & Feedback
+
+## Part 4 — Completed
+- Files created:
+  - backend/src/services/scoringEngine.js
+  - backend/src/services/qcResultService.js
+  - backend/src/utils/scoreExplainer.js
+  - backend/tests/scoringEngine.test.js
+- Files modified:
+  - SESSION_LOG.md
+- Commit: [after push]
+- Status: Complete
+- Next: Part 5 — API Endpoints & Frontend Dashboard

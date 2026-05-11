@@ -1,0 +1,41 @@
+{
+  "name": "creatorqc-backend",
+  "version": "1.0.0",
+  "description": "Backend for the CreatorQC system",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "worker": "node src/workers/videoProcessor.js",
+    "prisma:seed": "node prisma/seed.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "prisma": "^5.10.2",
+    "@prisma/client": "^5.10.2",
+    "bullmq": "^5.1.2",
+    "ioredis": "^5.3.2",
+    "twilio": "^4.22.0",
+    "openai": "^4.28.4",
+    "@anthropic-ai/sdk": "^0.18.0",
+    "winston": "^3.11.0",
+    "dotenv": "^16.4.5",
+    "multer": "^1.4.5-lts.1",
+    "fluent-ffmpeg": "^2.1.2",
+    "axios": "^1.6.7",
+    "zod": "^3.22.4",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.13",
+    "@aws-sdk/client-s3": "^3.525.0",
+    "@aws-sdk/s3-request-presigner": "^3.525.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3",
+    "jest": "^29.7.0"
+  },
+  "author": "Parivestra",
+  "license": "ISC"
+}

@@ -1,54 +1,31 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from "react";
 
-const VideoPlayer = ({ src }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
+const VideoPlayer = ({ src, onTimeUpdate }) => {
+  const videoRef = useRef(null);
 
   useEffect(() => {
-    if (src) {
-      setIsLoading(false);
-    } else {
-      setIsLoading(true);
-    }
-  }, [src]);
+    const video = videoRef.current;
+    if (!video) return;
 
-  const handleError = () => {
-    setError(true);
-    setIsLoading(false);
-  };
+    const handleTimeUpdate = () => {
+      if (onTimeUpdate) {
+        onTimeUpdate(video.currentTime);
+      }
+    };
 
-  if (isLoading) {
-    return <div className="w-full aspect-video bg-gray-200 animate-pulse rounded-md flex items-center justify-center">Loading video...</div>;
-  }
+    video.addEventListener("timeupdate", handleTimeUpdate);
 
-  if (error || !src) {
-    return (
-      <div className="w-full aspect-video bg-gray-100 rounded-md flex flex-col items-center justify-center text-center">
-        <p className="text-red-500 font-semibold">Video unavailable</p>
-        {src && (
-          <a href={src} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline mt-2">
-            Open in new tab
-          </a>
-        )}
-      </div>
-    );
-  }
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [onTimeUpdate]);
 
   return (
-    <video
-      key={src}
-      className="w-full rounded-md"
-      controls
-      autoPlay
-      muted
-      playsInline
-      onError={handleError}
-    >
-      <source src={src} type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
+    <div className="w-full bg-black rounded-lg overflow-hidden">
+      <video ref={videoRef} src={src} controls className="w-full h-auto" />
+    </div>
   );
 };
 

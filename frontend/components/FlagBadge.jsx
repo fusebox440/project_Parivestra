@@ -1,41 +1,21 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const formatFlagCode = (code) => {
-  return code
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+const flagColors = {
+  "low-quality": "bg-red-500",
+  "profanity": "bg-yellow-500",
+  "pii": "bg-orange-500",
+  "brand-safety": "bg-purple-500",
+  "other": "bg-gray-500",
 };
 
 const FlagBadge = ({ flag }) => {
-  const getSeverityVariant = (severity) => {
-    switch (severity) {
-      case 'HIGH':
-        return 'destructive';
-      case 'MEDIUM':
-        return 'secondary';
-      case 'LOW':
-      default:
-        return 'outline';
-    }
-  };
-
+  const color = flagColors[flag] || flagColors["other"];
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <Badge variant={getSeverityVariant(flag.severity)}>
-            {formatFlagCode(flag.code)}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{flag.detail}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Badge className={`${color} text-white`}>
+      {flag.replace("-", " ")}
+    </Badge>
   );
 };
 

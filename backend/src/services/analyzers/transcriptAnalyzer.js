@@ -1,13 +1,13 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
 
-const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 const calculateCost = (inputTokens, outputTokens) => {
-    const inputCost = (inputTokens / 1_000_000) * 3;
-    const outputCost = (outputTokens / 1_000_000) * 15;
-    return inputCost + outputCost;
+    // For this prototype, we are using the free tier of Gemini
+    return 0;
 };
 
 const buildPrompts = (transcript, segments, campaign, brand) => {
@@ -54,51 +54,28 @@ const buildPrompts = (transcript, segments, campaign, brand) => {
     return { systemPrompt, userPrompt };
 };
 
-async function analyze(transcript, segments, campaign, brand, retry = false) {
+async function analyze(transcript, segments, campaign, brand, retry = 0) {
     logger.info(`Starting transcript analysis for campaign: ${campaign.name}`);
     const { systemPrompt, userPrompt } = buildPrompts(transcript, segments, campaign, brand);
 
     try {
-        const response = await anthropic.messages.create({
-            model: 'claude-3-sonnet-20240229', // Using Sonnet 3 as 4.2 is not available
-            max_tokens: 1500,
-            system: systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }],
-        });
-
-        const jsonString = response.content[0].text;
-        const result = JSON.parse(jsonString);
-        const costUsd = calculateCost(response.usage.input_tokens, response.usage.output_tokens);
+        const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+        const result = await model.generateContent(fullPrompt);
+        const responseJson = result.response.text().replace(/```json\n?/, '').replace(/```$/, '');
+        const analysisResult = JSON.parse(responseJson);
+        
+        const costUsd = 0; // Free tier for this prototype
 
         logger.info(`Transcript analysis successful. Cost: $${costUsd}`);
-        return { ...result, costUsd };
+        return { ...analysisResult, costUsd };
 
     } catch (error) {
         logger.error(`Transcript analysis failed: ${error.message}`);
-        if (!retry && error instanceof SyntaxError) {
+        if (retry < 1 && error instanceof SyntaxError) {
             logger.warn('JSON parsing failed, retrying with explicit instruction...');
-            const { systemPrompt, userPrompt } = buildPrompts(transcript, segments, campaign, brand);
-            const modifiedUserPrompt = userPrompt + "\n\nIMPORTANT: Your entire response must be ONLY the raw JSON object, starting with { and ending with }. Do not include any other text or formatting.";
-            
-            // This is a simplified retry. A more robust implementation would be better.
-            try {
-                 const retryResponse = await anthropic.messages.create({
-                    model: 'claude-3-sonnet-20240229',
-                    max_tokens: 1500,
-                    system: systemPrompt,
-                    messages: [{ role: 'user', content: modifiedUserPrompt }],
-                });
-                const jsonString = retryResponse.content[0].text;
-                const result = JSON.parse(jsonString);
-                const costUsd = calculateCost(retryResponse.usage.input_tokens, retryResponse.usage.output_tokens);
-                logger.info(`Transcript analysis successful on retry. Cost: $${costUsd}`);
-                return { ...result, costUsd };
-            } catch (retryError) {
-                 logger.error(`Transcript analysis failed on retry: ${retryError.message}`);
-                 throw new Error(`Claude transcript analysis failed: ${retryError.message}`);
-            }
+            return analyze(transcript, segments, campaign, brand, retry + 1);
         }
-        throw new Error(`Claude transcript analysis failed: ${error.message}`);
+        throw new Error(`Gemini transcript analysis failed: ${error.message}`);
     }
 }
 

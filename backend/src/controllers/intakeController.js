@@ -5,6 +5,7 @@ const { validateTwilioSignature, sendWhatsAppMessage, maskPhone } = require('../
 const storageService = require('../services/storageService');
 const { addVideoJob } = require('../config/queue');
 const logger = require('../utils/logger');
+const templates = require('../config/messageTemplates');
 
 const prisma = new PrismaClient();
 
@@ -17,70 +18,71 @@ const handleWhatsAppWebhook = async (req, res) => {
     const { From: phone, MediaUrl0: mediaUrl, MediaContentType0: mediaType } = req.body;
     const maskedPhone = maskPhone(phone);
 
-    if (!mediaUrl || !mediaType || !mediaType.startsWith('video/')) {
-        await sendWhatsAppMessage(phone, 'Please send a video file for QC review.');
-        return res.status(200).send();
-    }
-
     try {
         const creator = await prisma.creator.findUnique({ where: { phone } });
         if (!creator) {
             logger.warn(`Creator not found for phone: ${maskedPhone}`);
-            await sendWhatsAppMessage(phone, 'Your number is not registered. Contact your campaign manager.');
+            await sendWhatsAppMessage(phone, templates.buildNotRegisteredMessage());
             return res.status(200).send();
         }
 
         const deliverable = await prisma.deliverable.findFirst({
             where: {
                 creatorId: creator.id,
-                status: 'PENDING',
                 campaign: {
                     status: 'ACTIVE',
                     endDate: { gt: new Date() },
                 },
+                OR: [
+                    { status: 'PENDING' },
+                    { status: 'REJECTED' },
+                ]
             },
             orderBy: { dueDate: 'asc' },
             include: { campaign: true },
         });
 
         if (!deliverable) {
-            logger.warn(`No active deliverable found for creator: ${creator.id}`);
-            await sendWhatsAppMessage(phone, 'No active campaign found. Contact your campaign manager.');
+            logger.warn(`No active/pending deliverable found for creator: ${creator.id}`);
+            await sendWhatsAppMessage(phone, templates.buildNoCampaignMessage());
             return res.status(200).send();
         }
 
-        const existingSubmission = await prisma.videoSubmission.findFirst({
-            where: {
-                deliverableId: deliverable.id,
-                status: { in: ['QUEUED', 'PROCESSING'] },
-            },
+        const latestSubmission = await prisma.videoSubmission.findFirst({
+            where: { deliverableId: deliverable.id },
+            orderBy: { receivedAt: 'desc' },
+            include: { qcResult: true },
         });
 
-        if (existingSubmission) {
-            await sendWhatsAppMessage(phone, 'Still processing your previous video. Please wait.');
-            return res.status(200).send();
+        if (latestSubmission) {
+            if (['QUEUED', 'PROCESSING'].includes(latestSubmission.status)) {
+                await sendWhatsAppMessage(phone, templates.buildAlreadyProcessingMessage());
+                return res.status(200).send();
+            }
+            if (latestSubmission.qcResult && latestSubmission.qcResult.decision === 'APPROVED') {
+                await sendWhatsAppMessage(phone, templates.buildAlreadyApprovedMessage());
+                return res.status(200).send();
+            }
         }
         
-        const approvedSubmission = await prisma.videoSubmission.findFirst({
-            where: {
-                deliverableId: deliverable.id,
-                status: 'COMPLETED',
-                qcResult: {
-                    decision: 'APPROVED'
-                }
-            },
-        });
-
-        if (approvedSubmission) {
-            await sendWhatsAppMessage(phone, 'Your video is already approved for this campaign!');
+        if (!mediaUrl || !mediaType || !mediaType.startsWith('video/')) {
+            await sendWhatsAppMessage(phone, 'Please send a video file for QC review.');
             return res.status(200).send();
         }
 
+        const isResubmission = latestSubmission && latestSubmission.qcResult && latestSubmission.qcResult.decision === 'REJECTED';
+        
         const videoResponse = await axios.get(mediaUrl, { responseType: 'arraybuffer' });
         const videoBuffer = Buffer.from(videoResponse.data);
 
         const key = `${deliverable.campaignId}/${creator.id}/${Date.now()}_whatsapp.mp4`;
         const { url: r2Url } = await storageService.uploadVideo(videoBuffer, key, mediaType);
+
+        const submissionPayload = { ...req.body };
+        if (isResubmission) {
+            submissionPayload.resubmission = true;
+            submissionPayload.previousSubmissionId = latestSubmission.id;
+        }
 
         const submission = await prisma.videoSubmission.create({
             data: {
@@ -88,14 +90,18 @@ const handleWhatsAppWebhook = async (req, res) => {
                 videoUrl: r2Url,
                 receivedAt: new Date(),
                 source: 'WHATSAPP',
-                rawWhatsappPayload: req.body,
+                rawWhatsappPayload: submissionPayload,
                 status: 'QUEUED',
             },
         });
 
         await addVideoJob(submission.id);
 
-        await sendWhatsAppMessage(phone, '✅ Video received! We\'ll review it and get back to you shortly.');
+        const replyMessage = isResubmission 
+            ? "Got your updated video! Re-running QC now. ⏳"
+            : templates.buildReceivedMessage();
+        await sendWhatsAppMessage(phone, replyMessage);
+        
         res.status(200).send();
 
     } catch (error) {

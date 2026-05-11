@@ -70,3 +70,22 @@
 - Commit: 1e7eb63b051499514d35453589969a3948d33933
 - Status: Complete
 - Next: Part 6 — API Endpoints & Frontend Dashboard
+
+## Part 6 — Completed
+- Files created:
+  - backend/src/routes/dashboard.js
+  - backend/src/controllers/dashboardController.js
+  - frontend/lib/api.js
+  - frontend/components/ScoreCard.jsx
+  - frontend/components/FlagBadge.jsx
+  - frontend/components/VideoPlayer.jsx
+  - frontend/app/dashboard/page.jsx
+  - frontend/app/queue/page.jsx
+  - frontend/app/submissions/[id]/page.jsx
+  - frontend/app/layout.jsx
+- Files modified:
+  - backend/src/index.js
+  - SESSION_LOG.md
+- Commit: ae4d5286307c76852a97cf1edee3eb3808d17495
+- Status: Complete
+- Next: Project Complete!

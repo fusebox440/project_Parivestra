@@ -6,6 +6,7 @@ const logger = require('./utils/logger');
 
 const webhookRouter = require('./routes/webhook');
 const uploadRouter = require('./routes/upload');
+const dashboardRouter = require('./routes/dashboard');
 
 const app = express();
 const startTime = Date.now();
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
 
 app.use('/webhook', webhookRouter);
 app.use('/upload', uploadRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 app.get('/health', (req, res) => {
   res.status(200).json({

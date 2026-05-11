@@ -1,3 +1,10 @@
+## ⚠️ Security Notice
+- NEVER commit `.env` files to this repository
+- `.env` files are listed in `.gitignore` and will be blocked by pre-commit hooks
+- Always use `.env.example` as a template — it contains only placeholders
+- If you accidentally expose a secret, rotate the key immediately
+- Real API keys go ONLY in your local `.env` file, never in code
+
 # CreatorQC: Automated Quality Control for Creator Videos
 
 CreatorQC is a comprehensive, automated system designed to streamline the quality control process for videos submitted by creators for marketing campaigns. It ingests videos from sources like WhatsApp, runs them through a sophisticated AI-powered analysis pipeline, and provides a clear, actionable decision: **Approve**, **Reject**, or **Flag for Human Review**. This drastically reduces manual effort, shortens feedback cycles, and ensures consistent quality standards at scale.

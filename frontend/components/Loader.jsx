@@ -1,18 +1,15 @@
 import { Loader2 } from "lucide-react";
 
-const Loader = ({ size = "md", text = "Loading..." }) => {
-  const sizes = {
-    sm: "w-6 h-6",
-    md: "w-12 h-12",
-    lg: "w-24 h-24",
-  };
-
+export default function Loader() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 py-16">
-      <Loader2 className={`animate-spin text-blue-500 ${sizes[size]}`} />
-      <p className="text-muted-foreground">{text}</p>
+    <div className="flex h-full min-h-[20rem] w-full items-center justify-center">
+      <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
     </div>
   );
-};
+}
 
-export default Loader;
+export function SkeletonCard() {
+  return (
+    <div className="h-32 w-full rounded-xl bg-zinc-800 animate-pulse" />
+  );
+}

@@ -1,29 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-const SearchBar = ({ onSearch, placeholder = "Search..." }) => {
-  const [term, setTerm] = useState("");
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    onSearch(term);
+export default function SearchBar({ value, onChange, placeholder = "Search..." }) {
+  const handleClear = () => {
+    // Simulate an event with an empty value
+    const syntheticEvent = {
+      target: {
+        value: "",
+      },
+    };
+    onChange(syntheticEvent);
   };
 
   return (
-    <form onSubmit={handleSearch} className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <div className="relative w-full">
+      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
       <Input
-        type="text"
+        type="search"
+        value={value}
+        onChange={onChange}
         placeholder={placeholder}
-        value={term}
-        onChange={(e) => setTerm(e.target.value)}
-        className="pl-10"
+        className="h-10 w-full rounded-full border border-zinc-800 bg-zinc-900 pl-10 pr-10 focus-visible:ring-1 focus-visible:ring-indigo-500 focus-visible:ring-offset-0"
       />
-    </form>
+      {value && (
+        <button
+          type="button"
+          onClick={handleClear}
+          className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 hover:text-white"
+          aria-label="Clear search"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
-};
-
-export default SearchBar;
+}

@@ -1,22 +1,18 @@
-import { File, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function EmptyState({ message, onUploadClick }) {
+export default function EmptyState({ icon, title, subtitle, action }) {
     return (
-        <div className="text-center py-16 px-4 border-2 border-dashed border-muted rounded-lg">
-            <File className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-medium text-foreground">No items found</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{message}</p>
-            {onUploadClick && (
-                <div className="mt-6">
-                    <button
-                        type="button"
-                        onClick={onUploadClick}
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                    >
-                        <Upload className="-ml-1 mr-2 h-5 w-5" />
-                        Upload Video
-                    </button>
-                </div>
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-800 bg-transparent p-12 text-center">
+            <div className="text-zinc-600">{icon}</div>
+            <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
+            <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>
+            {action && action.text && action.onClick && (
+                <Button
+                    onClick={action.onClick}
+                    className="mt-6 bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500"
+                >
+                    {action.text}
+                </Button>
             )}
         </div>
     );

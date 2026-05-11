@@ -1,116 +1,50 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from "react";
+import { Loader2, PlayCircle } from "lucide-react";
 
 export default function VideoPlayer({ src }) {
   const videoRef = useRef(null);
-  const containerRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [status, setStatus] = useState("loading"); // 'loading', 'playing', 'error'
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    setStatus(src ? "loading" : "error");
+  }, [src]);
 
-    const handleTimeUpdate = () => setProgress(video.currentTime);
-    const handleDurationChange = () => setDuration(video.duration);
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
+  const Placeholder = () => (
+    <div className="flex h-full w-full flex-col items-center justify-center rounded-lg bg-zinc-900 aspect-video">
+      <PlayCircle className="h-16 w-16 text-zinc-600" />
+      <p className="mt-2 text-sm font-medium text-zinc-500">Video unavailable</p>
+    </div>
+  );
 
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("durationchange", handleDurationChange);
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
+  const Spinner = () => (
+    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+      <Loader2 className="h-12 w-12 animate-spin text-indigo-500" />
+    </div>
+  );
 
-    return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("durationchange", handleDurationChange);
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-    };
-  }, []);
-
-  const togglePlay = () => {
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-    } else {
-      videoRef.current.pause();
-    }
-  };
-
-  const handleVolumeChange = (value) => {
-    const newVolume = value[0];
-    videoRef.current.volume = newVolume;
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-  };
-
-  const toggleMute = () => {
-    videoRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
-
-  const handleProgressChange = (value) => {
-    videoRef.current.currentTime = value[0];
-  };
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
+  if (status === "error") {
+    return <Placeholder />;
+  }
 
   return (
-    <div ref={containerRef} className="relative group bg-black rounded-lg overflow-hidden">
-      <video ref={videoRef} src={src} className="w-full h-full" onClick={togglePlay} />
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="flex items-center gap-4 text-white">
-          <Button variant="ghost" size="icon" onClick={togglePlay}>
-            {isPlaying ? <Pause /> : <Play />}
-          </Button>
-          <div className="flex items-center gap-2 w-full">
-            <span className="text-xs">{formatTime(progress)}</span>
-            <Slider
-              value={[progress]}
-              max={duration}
-              onValueChange={handleProgressChange}
-            />
-            <span className="text-xs">{formatTime(duration)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleMute}>
-              {isMuted ? <VolumeX /> : <Volume2 />}
-            </Button>
-            <Slider
-              value={[isMuted ? 0 : volume]}
-              max={1}
-              step={0.1}
-              onValueChange={handleVolumeChange}
-              className="w-24"
-            />
-          </div>
-          <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
-            {isFullscreen ? <Minimize /> : <Maximize />}
-          </Button>
-        </div>
-      </div>
+    <div className="relative w-full rounded-lg bg-black overflow-hidden">
+      {status === "loading" && <Spinner />}
+      <video
+        ref={videoRef}
+        src={src}
+        controls
+        className="w-full h-full aspect-video"
+        onCanPlay={() => setStatus("playing")}
+        onError={() => setStatus("error")}
+        onWaiting={() => setStatus("loading")}
+        onPlaying={() => setStatus("playing")}
+        style={{ display: status === "loading" ? "none" : "block" }}
+      />
+      {status === "loading" && (
+        <div className="w-full bg-black aspect-video" />
+      )}
     </div>
   );
 }

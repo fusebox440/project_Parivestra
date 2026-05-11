@@ -1,27 +1,32 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Mic, MessageSquare, Camera, Tag } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Info } from 'lucide-react';
 
-const flagConfig = {
-    'profanity': { icon: <AlertTriangle className="h-3 w-3" />, color: 'destructive' },
-    'clarity': { icon: <Mic className="h-3 w-3" />, color: 'warning' },
-    'sentiment': { icon: <MessageSquare className="h-3 w-3" />, color: 'warning' },
-    'lighting': { icon: <Camera className="h-3 w-3" />, color: 'warning' },
-    'stability': { icon: <Camera className="h-3 w-3" />, color: 'warning' },
-    'keyword': { icon: <Tag className="h-3 w-3" />, color: 'secondary' },
-    'object': { icon: <Tag className="h-3 w-3" />, color: 'secondary' },
-    'default': { icon: <AlertTriangle className="h-3 w-3" />, color: 'default' }
+const severityConfig = {
+    HIGH: { icon: <AlertTriangle className="h-4 w-4" />, variant: 'destructive' },
+    MEDIUM: { icon: <AlertCircle className="h-4 w-4" />, variant: 'warning' },
+    LOW: { icon: <Info className="h-4 w-4" />, variant: 'secondary' },
 };
 
-export default function FlagBadge({ flag }) {
-    const { icon, color } = flagConfig[flag.type] || flagConfig.default;
-    const value = flag.value || flag.type;
+const formatCode = (code) => {
+    if (!code) return '';
+    return code
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+};
+
+export default function FlagBadge({ code, severity, detail }) {
+    const config = severityConfig[severity] || severityConfig.LOW;
 
     return (
-        <Badge variant={color} className="flex items-center gap-1.5 text-xs font-medium">
-            {icon}
-            <span className="capitalize">{value}</span>
-        </Badge>
+        <div className="flex flex-col items-start">
+            <Badge variant={config.variant} className="inline-flex items-center gap-x-1.5 py-1 px-2.5">
+                {config.icon}
+                <span className="text-xs font-semibold">{formatCode(code)}</span>
+            </Badge>
+            {detail && <p className="mt-1 text-xs text-zinc-400">{detail}</p>}
+        </div>
     );
 }

@@ -8,6 +8,7 @@ function Progress({
   className,
   children,
   value,
+  indicatorClassName,
   ...props
 }: ProgressPrimitive.Root.Props) {
   return (

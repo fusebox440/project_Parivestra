@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 const StatCard = ({ title, value, icon, change, changeType }) => {
+  const isPositive = changeType === 'positive';
   const changeColor = changeType === "increase" ? "text-green-500" : "text-red-500";
 
   return (
@@ -11,11 +13,13 @@ const StatCard = ({ title, value, icon, change, changeType }) => {
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {change && (
-          <p className="text-xs text-muted-foreground">
-            <span className={changeColor}>{change}</span> from last month
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground flex items-center">
+          <span className={`flex items-center mr-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+            {isPositive ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+            {change}%
+          </span>
+          vs last month
+        </p>
       </CardContent>
     </Card>
   );

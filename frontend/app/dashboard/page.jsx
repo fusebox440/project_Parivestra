@@ -1,132 +1,123 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { BarChart, Users, Video, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getStats } from "@/lib/api";
+import { api } from "@/lib/api";
 import StatCard from "@/components/StatCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import Loader from "@/components/Loader";
 import ErrorState from "@/components/ErrorState";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-} from "recharts";
-import { DollarSign, CheckCircle, XCircle, Clock, Zap } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import EmptyState from "@/components/EmptyState";
+import { formatDistanceToNow } from "date-fns";
 
-const DashboardPage = () => {
-  const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ["dashboardStats"],
-    queryFn: getStats,
-  });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [refetch]);
-
-  if (isLoading) return <Loader size="lg" />;
-  if (error)
-    return (
-      <ErrorState
-        title="Failed to load dashboard"
-        message={error.message}
-        onRetry={refetch}
-      />
-    );
-
-  const stats = data?.stats || {};
-  const charts = data?.charts || {};
-
-  const kpiCards = [
-    {
-      title: "Approval Rate",
-      value: `${stats.approvalRate?.toFixed(2) || 0}%`,
-      icon: <CheckCircle className="w-6 h-6 text-gray-400" />,
-    },
-    {
-      title: "Rejection Rate",
-      value: `${stats.rejectionRate?.toFixed(2) || 0}%`,
-      icon: <XCircle className="w-6 h-6 text-gray-400" />,
-    },
-    {
-      title: "Pending Review",
-      value: stats.pendingReviewCount || 0,
-      icon: <Clock className="w-6 h-6 text-gray-400" />,
-    },
-    {
-      title: "Avg. QC Score",
-      value: stats.avgQcScore?.toFixed(2) || 0,
-      icon: <Zap className="w-6 h-6 text-gray-400" />,
-    },
-    {
-      title: "Avg. Processing Time",
-      value: `${stats.avgProcessingTime?.toFixed(2) || 0}s`,
-      icon: <DollarSign className="w-6 h-6 text-gray-400" />,
-    },
-  ];
-
-  return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-        {kpiCards.map((card) => (
-          <StatCard
-            key={card.title}
-            title={card.title}
-            value={card.value}
-            icon={card.icon}
-          />
-        ))}
-      </div>
-      <div className="grid gap-6 mt-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Submissions Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={charts.submissionsTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="count" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Decision Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={charts.decisionBreakdown}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="approved" fill="#82ca9d" />
-                <Bar dataKey="rejected" fill="#ff6b6b" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+const fetchDashboardData = async () => {
+  const [statsRes, recentRes] = await Promise.all([
+    api.get("/dashboard/stats"),
+    api.get("/dashboard/recent"),
+  ]);
+  return { stats: statsRes.data, recent: recentRes.data };
 };
 
-export default DashboardPage;
+export default function DashboardPage() {
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["dashboardData"],
+    queryFn: fetchDashboardData,
+  });
+
+  if (isLoading) return <Loader text="Loading dashboard..." />;
+  if (error)
+    return <ErrorState message={error.message || "Failed to load dashboard data."} />;
+  if (!data) return <EmptyState message="No dashboard data available." />;
+
+  const { stats, recent } = data;
+
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <StatCard
+          title="Total Submissions"
+          value={stats.totalSubmissions}
+          icon={<Video className="h-4 w-4 text-muted-foreground" />}
+          change={stats.submissionsChange}
+          changeType={stats.submissionsChangeType}
+        />
+        <StatCard
+          title="Average Score"
+          value={`${stats.averageScore.toFixed(1)}/100`}
+          icon={<Star className="h-4 w-4 text-muted-foreground" />}
+          change={stats.scoreChange}
+          changeType={stats.scoreChangeType}
+        />
+        <StatCard
+          title="Unique Creators"
+          value={stats.uniqueCreators}
+          icon={<Users className="h-4 w-4 text-muted-foreground" />}
+          change={stats.creatorsChange}
+          changeType={stats.creatorsChangeType}
+        />
+        <StatCard
+          title="Issues Flagged"
+          value={stats.totalFlags}
+          icon={<BarChart className="h-4 w-4 text-muted-foreground" />}
+          change={stats.flagsChange}
+          changeType={stats.flagsChangeType}
+        />
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Submissions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Creator</TableHead>
+                <TableHead>Submitted</TableHead>
+                <TableHead className="text-right">Score</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recent.map((submission) => (
+                <TableRow key={submission.id}>
+                  <TableCell>
+                    <Link
+                      href={`/submissions/${submission.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {submission.creator.name}
+                    </Link>
+                    <p className="text-sm text-muted-foreground hidden md:block">
+                      {submission.title}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    {formatDistanceToNow(new Date(submission.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge
+                      variant={submission.score > 85 ? "success" : submission.score > 60 ? "warning" : "destructive"}
+                    >
+                      {submission.score}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
+  );
+}

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -74,4 +74,4 @@ export const getSubmissionDetail = (id) => api.get(`/api/dashboard/submissions/$
  */
 export const getCampaignReport = (params) => api.get('/api/dashboard/reports/campaign', { params });
 
-export default api;
+export { api };

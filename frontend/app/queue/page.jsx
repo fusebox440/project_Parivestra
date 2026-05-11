@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getQueue, resolveQueueItem } from "@/lib/api";
+import { api } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,206 +11,133 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { RefreshCw, AlertTriangle, CheckCircle } from "lucide-react";
 import Loader from "@/components/Loader";
 import ErrorState from "@/components/ErrorState";
 import EmptyState from "@/components/EmptyState";
-import SearchBar from "@/components/SearchBar";
+import { formatDistanceToNow } from "date-fns";
 import TablePagination from "@/components/TablePagination";
-import VideoPlayer from "@/components/VideoPlayer";
-import ScoreCard from "@/components/ScoreCard";
-import FlagBadge from "@/components/FlagBadge";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
 
-const QueuePage = () => {
+const fetchQueue = async ({ queryKey }) => {
+  const [_key, { page, limit }] = queryKey;
+  const response = await api.get("/queue", { params: { page, limit } });
+  return response.data;
+};
+
+const requeueItem = async (id) => {
+  await api.post(`/queue/${id}/requeue`);
+};
+
+export default function QueuePage() {
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({ search: "", status: "" });
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [reviewerNotes, setReviewerNotes] = useState("");
-
+  const limit = 10;
   const queryClient = useQueryClient();
 
-  const { data, error, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["queue", page, filters],
-    queryFn: () => getQueue({ page, limit: 10, ...filters }),
+  const { data, error, isLoading, isFetching } = useQuery({
+    queryKey: ["queue", { page, limit }],
+    queryFn: fetchQueue,
     keepPreviousData: true,
   });
 
   const mutation = useMutation({
-    mutationFn: ({ id, status, reviewerNotes }) =>
-      resolveQueueItem(id, { status, reviewerNotes }),
+    mutationFn: requeueItem,
     onSuccess: () => {
       queryClient.invalidateQueries(["queue"]);
-      setSelectedItem(null);
     },
   });
 
-  const handleResolve = (status) => {
-    if (selectedItem) {
-      mutation.mutate({ id: selectedItem.id, status, reviewerNotes });
-    }
+  const handleRequeue = (id) => {
+    mutation.mutate(id);
   };
 
-  const handleSearch = (searchTerm) => {
-    setFilters({ ...filters, search: searchTerm });
-    setPage(1);
-  };
-
-  const renderStatusBadge = (status) => {
+  const renderStatus = (status) => {
     switch (status) {
-      case "PENDING":
-        return <Badge className="bg-yellow-500 text-white">Pending</Badge>;
-      case "APPROVED":
-        return <Badge className="bg-green-500 text-white">Approved</Badge>;
-      case "REJECTED":
-        return <Badge className="bg-red-500 text-white">Rejected</Badge>;
-      case "PROCESSING":
-        return <Badge className="bg-blue-500 text-white">Processing</Badge>;
+      case "processing":
+        return (
+          <Badge variant="secondary">
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />Processing
+          </Badge>
+        );
+      case "failed":
+        return (
+          <Badge variant="destructive">
+            <AlertTriangle className="mr-2 h-4 w-4" />Failed
+          </Badge>
+        );
+      case "completed":
+        return (
+          <Badge variant="success">
+            <CheckCircle className="mr-2 h-4 w-4" />Completed
+          </Badge>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
-  if (isLoading) return <Loader size="lg" />;
+  if (isLoading) return <Loader text="Loading queue..." />;
   if (error)
-    return (
-      <ErrorState
-        title="Failed to load queue"
-        message={error.message}
-        onRetry={refetch}
-      />
-    );
-
-  const { items = [], totalPages = 1, totalItems = 0 } = data || {};
+    return <ErrorState message={error.message || "Failed to load queue."} />;
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Human Review Queue</h1>
-      <div className="mb-4">
-        <SearchBar onSearch={handleSearch} />
-      </div>
-
-      {isFetching && <Loader />}
-
-      <Sheet open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-        <SheetContent className="w-full md:w-3/4 lg:w-1/2 overflow-y-auto">
-          {selectedItem && (
-            <>
-              <SheetHeader>
-                <SheetTitle>Review Submission: {selectedItem.id}</SheetTitle>
-              </SheetHeader>
-              <div className="p-4 space-y-6">
-                <VideoPlayer src={selectedItem.videoUrl} />
-                <div className="grid grid-cols-2 gap-4">
-                  <ScoreCard score={selectedItem.qcScore} title="QC Score" />
-                  <ScoreCard score={selectedItem.goodnessScore} title="Goodness Score" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Transcript</h3>
-                  <div className="h-48 overflow-y-auto p-2 border rounded-md bg-gray-50">
-                    {selectedItem.transcript}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Flags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedItem.flags?.map((flag) => (
-                      <FlagBadge key={flag} flag={flag} />
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Reviewer Notes</h3>
-                  <Textarea
-                    value={reviewerNotes}
-                    onChange={(e) => setReviewerNotes(e.target.value)}
-                    placeholder="Add your notes here..."
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleResolve("REJECTED")}
-                    disabled={mutation.isLoading}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    className="bg-green-500 hover:bg-green-600"
-                    onClick={() => handleResolve("APPROVED")}
-                    disabled={mutation.isLoading}
-                  >
-                    Approve
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {items.length === 0 ? (
-        <EmptyState
-          title="No items in the queue"
-          message="Everything is up to date."
-        />
-      ) : (
-        <>
-          <Card>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Processing Queue</CardTitle>
+        {isFetching && <RefreshCw className="h-5 w-5 text-muted-foreground animate-spin" />}
+      </CardHeader>
+      <CardContent>
+        {data?.items.length === 0 ? (
+          <EmptyState message="The processing queue is empty." />
+        ) : (
+          <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead>Video Title</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>QC Score</TableHead>
-                  <TableHead>Submitted At</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead>Added</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    onClick={() => {
-                      setSelectedItem(item);
-                      setReviewerNotes(item.reviewerNotes || "");
-                    }}
-                    className="cursor-pointer hover:bg-gray-50"
-                  >
-                    <TableCell className="font-medium">{item.id.substring(0, 8)}...</TableCell>
-                    <TableCell>{renderStatusBadge(item.status)}</TableCell>
-                    <TableCell>{item.qcScore}</TableCell>
+                {data?.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.video.title}</TableCell>
+                    <TableCell>{renderStatus(item.status)}</TableCell>
                     <TableCell>
-                      {new Date(item.createdAt).toLocaleString()}
+                      {formatDistanceToNow(new Date(item.createdAt), {
+                        addSuffix: true,
+                      })}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm">Review</Button>
+                      {item.status === "failed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRequeue(item.id)}
+                          disabled={mutation.isLoading}
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4" />Requeue
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </Card>
-          <TablePagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            itemsPerPage={10}
-            totalItems={totalItems}
-          />
-        </>
-      )}
-    </div>
+            <TablePagination
+              page={page}
+              totalPages={data?.totalPages}
+              setPage={setPage}
+              hasNextPage={data?.hasNextPage}
+              hasPrevPage={data?.hasPrevPage}
+            />
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
-};
-
-export default QueuePage;
+}

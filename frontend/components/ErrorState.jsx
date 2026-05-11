@@ -1,18 +1,18 @@
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const ErrorState = ({ title, message, onRetry }) => {
+const ErrorState = ({ message, onRetry }) => {
   return (
-    <div className="text-center p-8 border-2 border-dashed border-red-300 bg-red-50 rounded-lg">
-      <div className="flex justify-center items-center mb-4">
-        <AlertTriangle className="w-16 h-16 text-red-500" />
-      </div>
-      <h3 className="text-xl font-semibold text-red-800">{title}</h3>
-      <p className="text-red-600 mt-2">{message}</p>
+    <div className="text-center py-16 px-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+      <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
+      <h3 className="mt-4 text-lg font-medium text-destructive">An Error Occurred</h3>
+      <p className="mt-2 text-sm text-muted-foreground">{message}</p>
       {onRetry && (
-        <Button onClick={onRetry} className="mt-4">
-          Try Again
-        </Button>
+        <div className="mt-6">
+          <Button onClick={onRetry} className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-destructive hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-destructive">
+            Try Again
+          </Button>
+        </div>
       )}
     </div>
   );

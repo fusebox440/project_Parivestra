@@ -1,50 +1,38 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const TablePagination = ({
+export default function TablePagination({
   page,
   totalPages,
-  onPageChange,
-  itemsPerPage,
-  totalItems,
-}) => {
-  const startItem = (page - 1) * itemsPerPage + 1;
-  const endItem = Math.min(page * itemsPerPage, totalItems);
-
+  setPage,
+  hasNextPage,
+  hasPrevPage,
+}) {
   return (
-    <div className="flex items-center justify-between py-4">
-      <div>
-        <p className="text-sm text-gray-700">
-          Showing <span className="font-medium">{startItem}</span> to{" "}
-          <span className="font-medium">{endItem}</span> of{" "}
-          <span className="font-medium">{totalItems}</span> results
-        </p>
+    <div className="flex items-center justify-between pt-4">
+      <div className="text-sm text-muted-foreground">
+        Page {page} of {totalPages}
       </div>
       <div className="flex items-center space-x-2">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
+          onClick={() => setPage(page - 1)}
+          disabled={!hasPrevPage}
         >
-          <ChevronLeft className="w-4 h-4" />
-          <span className="sr-only">Previous</span>
+          <ChevronLeft className="h-4 w-4" />
+          <span className="ml-2">Previous</span>
         </Button>
-        <span className="text-sm">
-          Page {page} of {totalPages}
-        </span>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
+          onClick={() => setPage(page + 1)}
+          disabled={!hasNextPage}
         >
-          <ChevronRight className="w-4 h-4" />
-          <span className="sr-only">Next</span>
+          <span className="mr-2">Next</span>
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     </div>
   );
-};
-
-export default TablePagination;
+}

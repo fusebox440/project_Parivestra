@@ -4,6 +4,9 @@ const helmet = require('helmet');
 const cors = require('cors');
 const logger = require('./utils/logger');
 
+const webhookRouter = require('./routes/webhook');
+const uploadRouter = require('./routes/upload');
+
 const app = express();
 const startTime = Date.now();
 
@@ -20,6 +23,9 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+app.use('/webhook', webhookRouter);
+app.use('/upload', uploadRouter);
 
 app.get('/health', (req, res) => {
   res.status(200).json({

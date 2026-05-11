@@ -1,11 +1,13 @@
 version: '3.8'
+
 services:
   postgres:
     image: postgres:15
+    restart: always
     environment:
-      POSTGRES_USER: creatorqc
-      POSTGRES_PASSWORD: creatorqc
-      POSTGRES_DB: creatorqc
+      - POSTGRES_USER=creatorqc
+      - POSTGRES_PASSWORD=creatorqc
+      - POSTGRES_DB=creatorqc
     ports:
       - "5432:5432"
     volumes:
@@ -13,10 +15,47 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: always
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+    command: node src/index.js
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+    command: node src/workers/videoProcessor.js
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: always
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

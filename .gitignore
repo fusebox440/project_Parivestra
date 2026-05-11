@@ -1,0 +1,36 @@
+# Environment files - NEVER commit these
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env*.local
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+frontend/.env.local
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+/tmp/
+*.tmp
+
+# Prisma
+backend/prisma/migrations/

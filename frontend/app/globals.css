@@ -4,52 +4,51 @@
 
 @layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #f4f4f5;
-    --card: #111111;
-    --card-foreground: #f4f4f5;
-    --popover: #111111;
-    --popover-foreground: #f4f4f5;
-    --primary: #6366f1;
-    --primary-foreground: #f4f4f5;
-    --secondary: #1f1f1f;
-    --secondary-foreground: #f4f4f5;
-    --muted: #71717a;
-    --muted-foreground: #f4f4f5;
-    --accent: #1f1f1f;
-    --accent-foreground: #f4f4f5;
-    --destructive: #ef4444;
-    --destructive-foreground: #f4f4f5;
-    --success: #22c55e;
-    --success-foreground: #f4f4f5;
-    --warning: #f59e0b;
-    --warning-foreground: #f4f4f5;
-    --border: #1f1f1f;
-    --input: #1f1f1f;
-    --ring: #6366f1;
-    --radius: 0.5rem;
+    --background: 0 0% 4%;
+    --foreground: 240 5% 96%;
+    --card: 0 0% 7%;
+    --card-foreground: 240 5% 96%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 240 5% 96%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 240 5% 96%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 45%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 240 5% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 4% 12%;
+    --input: 240 4% 12%;
+    --ring: 239 84% 67%;
+    --radius: 0.75rem;
   }
 
   * {
+    @apply border-border box-sizing-border;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    border-color: var(--border);
   }
 
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: 'Inter', sans-serif;
-  }
-  
   html {
     scroll-behavior: smooth;
   }
 
+  body {
+    @apply bg-background text-foreground;
+    background-color: #0a0a0a;
+    color: #f4f4f5;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
@@ -57,11 +56,11 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #1f1f1f;
-    border-radius: 4px;
+    background: #3f3f46;
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #2a2a2a;
+    background: #52525b;
   }
 }

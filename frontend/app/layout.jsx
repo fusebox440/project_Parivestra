@@ -1,10 +1,8 @@
 "use client";
 
+import "./globals.css";
 import { Inter } from "next/font/google";
-import {
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,85 +10,252 @@ import {
   ClipboardList,
   Settings,
   Menu,
-  Square,
+  X,
 } from "lucide-react";
 import { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const queryClient = new QueryClient();
+const navItems = [
+  { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/queue", label: "Review Queue", Icon: ClipboardList },
+  { href: "/settings", label: "Settings", Icon: Settings },
+];
 
-const NavItem = ({ href, icon: Icon, children }) => {
+const styles = {
+  sidebar: {
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#0d0d0d",
+    borderRight: "1px solid #1f1f1f",
+    width: "240px",
+    flexShrink: 0,
+  },
+  logo: {
+    display: "flex",
+    alignItems: "center",
+    padding: "20px 16px",
+    borderBottom: "1px solid #1f1f1f",
+  },
+  logoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#6366f1",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    flexShrink: 0,
+  },
+  logoText: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: "#ffffff",
+    letterSpacing: "-0.02em",
+  },
+  nav: {
+    flex: 1,
+    padding: "12px 8px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+  navItemBase: {
+    display: "flex",
+    alignItems: "center",
+    padding: "9px 12px",
+    borderRadius: 8,
+    textDecoration: "none",
+    fontSize: 14,
+    fontWeight: 500,
+    transition: "all 0.15s ease",
+    gap: 10,
+  },
+  navItemActive: {
+    backgroundColor: "#6366f1",
+    color: "#ffffff",
+  },
+  navItemInactive: {
+    color: "#71717a",
+    backgroundColor: "transparent",
+  },
+  version: {
+    padding: "16px",
+    fontSize: 12,
+    color: "#3f3f46",
+    borderTop: "1px solid #1f1f1f",
+  },
+  main: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    backgroundColor: "#0a0a0a",
+  },
+  mobileHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "12px 16px",
+    borderBottom: "1px solid #1f1f1f",
+    backgroundColor: "#0d0d0d",
+  },
+  content: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "32px",
+    backgroundColor: "#0a0a0a",
+  },
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    zIndex: 40,
+  },
+  mobileSidebar: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    zIndex: 50,
+    backgroundColor: "#0d0d0d",
+    borderRight: "1px solid #1f1f1f",
+    width: 240,
+  },
+};
+
+function NavItem({ href, label, Icon, onClick }) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname === href || pathname.startsWith(href + "/");
 
   return (
     <Link
       href={href}
-      className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-        isActive
-          ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-secondary/50"
-      }`}
+      onClick={onClick}
+      style={{
+        ...styles.navItemBase,
+        ...(isActive ? styles.navItemActive : styles.navItemInactive),
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = "#1a1a1a";
+          e.currentTarget.style.color = "#ffffff";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = "transparent";
+          e.currentTarget.style.color = "#71717a";
+        }
+      }}
     >
-      <Icon className="mr-3 h-5 w-5" />
-      {children}
+      <Icon size={18} />
+      {label}
     </Link>
   );
-};
+}
 
-const Sidebar = () => (
-  <div className="flex flex-col h-full bg-card border-r border-border">
-    <div className="p-4 flex items-center">
-      <Square className="h-6 w-6 text-primary" />
-      <h1 className="ml-2 text-lg font-semibold">CreatorQC</h1>
+function SidebarContent({ onNavClick }) {
+  return (
+    <div style={styles.sidebar}>
+      <div style={styles.logo}>
+        <div style={styles.logoIcon}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8L6.5 11.5L13 4.5" stroke="white" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <span style={styles.logoText}>CreatorQC</span>
+      </div>
+      <nav style={styles.nav}>
+        {navItems.map(({ href, label, Icon }) => (
+          <NavItem
+            key={href}
+            href={href}
+            label={label}
+            Icon={Icon}
+            onClick={onNavClick}
+          />
+        ))}
+      </nav>
+      <div style={styles.version}>v1.0.0</div>
     </div>
-    <nav className="flex-1 px-2 py-4 space-y-1">
-      <NavItem href="/dashboard" icon={LayoutDashboard}>
-        Dashboard
-      </NavItem>
-      <NavItem href="/queue" icon={ClipboardList}>
-        Review Queue
-      </NavItem>
-      <NavItem href="/settings" icon={Settings}>
-        Settings
-      </NavItem>
-    </nav>
-    <div className="p-4 text-xs text-muted-foreground">v1.0.0</div>
-  </div>
-);
+  );
+}
 
 export default function RootLayout({ children }) {
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
+      <body className={inter.className} style={{
+        margin: 0,
+        padding: 0,
+        backgroundColor: "#0a0a0a",
+        color: "#f4f4f5"
+      }}>
         <QueryClientProvider client={queryClient}>
-          <div className="flex h-screen bg-background">
-            <div className="hidden md:flex md:w-60">
-              <Sidebar />
+          <div style={{ display: "flex", height: "100vh",
+            backgroundColor: "#0a0a0a", overflow: "hidden" }}>
+
+            {/* Desktop Sidebar */}
+            <div style={{ display: "none" }} className="md:block">
+              <SidebarContent />
             </div>
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <header className="md:hidden flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center">
-                  <Square className="h-6 w-6 text-primary" />
-                  <h1 className="ml-2 text-lg font-semibold">CreatorQC</h1>
+            <div style={styles.sidebar}
+              className="hidden md:flex">
+              <SidebarContent />
+            </div>
+
+            {/* Mobile overlay */}
+            {mobileOpen && (
+              <>
+                <div
+                  style={styles.overlay}
+                  onClick={() => setMobileOpen(false)}
+                />
+                <div style={styles.mobileSidebar}>
+                  <SidebarContent onNavClick={() => setMobileOpen(false)} />
                 </div>
-                <Sheet open={open} onOpenChange={setOpen}>
-                  <SheetTrigger asChild>
-                    <button className="p-2">
-                      <Menu className="h-6 w-6" />
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-60 p-0">
-                    <Sidebar />
-                  </SheetContent>
-                </Sheet>
+              </>
+            )}
+
+            {/* Main content */}
+            <div style={styles.main}>
+              {/* Mobile header */}
+              <header style={styles.mobileHeader} className="md:hidden">
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={styles.logoIcon}>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 8L6.5 11.5L13 4.5" stroke="white"
+                        strokeWidth="2" strokeLinecap="round"
+                        strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <span style={styles.logoText}>CreatorQC</span>
+                </div>
+                <button
+                  onClick={() => setMobileOpen(true)}
+                  style={{
+                    background: "none", border: "none",
+                    color: "#71717a", cursor: "pointer", padding: 4
+                  }}
+                >
+                  <Menu size={22} />
+                </button>
               </header>
-              <main className="flex-1 overflow-y-auto p-4 md:p-8">
+
+              <main style={styles.content}>
                 {children}
               </main>
             </div>
